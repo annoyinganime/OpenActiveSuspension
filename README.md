@@ -1,5 +1,6 @@
 # OpenActiveSuspension
 My simple attempt to make an active suspension
+DEMO: https://www.youtube.com/watch?v=fvEdsod2xxM
 
 
 This was written to work with arduino nano (any atmega328 or 168 will be fine) and mpu6050 gyro. 
