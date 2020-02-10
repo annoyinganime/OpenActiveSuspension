@@ -2,12 +2,13 @@
 #include <Servo.h>
 
 #define SCALE 10 // servo "degrees" per newton
-#define SERVO_MIN 45
-#define SERVO_MAX 135
-#define SERVO_MID 96
+#define SERVO_MIN 70
+#define SERVO_MAX 110
+#define SERVO_MID 90
+#define SERVO_DIFF 12
 #define X_CAL 0.0
-#define Y_CAL -0.3
-#define Z_CAL 0.2
+#define Y_CAL -0.4
+#define Z_CAL 1.2
 #define PITCH -acz
 #define ROLL acy
 
@@ -30,14 +31,12 @@ void setup() {
   rl.attach(4);
   fl.attach(5);
  
-  rr.write(SERVO_MID);
-  fr.write(SERVO_MID);
-  fl.write(SERVO_MID);
-  rl.write(SERVO_MID);
-  delay(500);
-  for (int i = 0; i<4; i++){
-    d[i]=SERVO_MID;
+  /*for (int i = 0; i<4; i++){   // for calibration purposes only
+    d[i]=SERVO_MAX;            // Use SERVO_MAX, SERVO_MIN or SERVO_MID to see where maximal, minimal and central points are in reality. Comment out wa(d) in loop() 
     }
+  wa(d);
+    /**/
+  
 }
 double acx, acy, acz; 
 
@@ -53,9 +52,17 @@ void loop() {
   Serial.print("   ");
   Serial.print(acz);
   Serial.println();/**/
-  d[0] = SERVO_MID + (-PITCH+ROLL)*SCALE; //rr
+  //   "Real looking" suspension - car acts like it has big inertia
+  /*
+  d[0] = SERVO_MID + (PITCH-ROLL)*SCALE;  //rr
   d[1] = SERVO_MID + (-PITCH-ROLL)*SCALE; //fr
   d[2] = SERVO_MID + (PITCH+ROLL)*SCALE;  //rl
+  d[3] = SERVO_MID + (-PITCH+ROLL)*SCALE; //fl/**/
+
+  //   Active suspension - car tries to counteract its inertia and compensate its angle
+  d[0] = SERVO_MID + (-PITCH+ROLL)*SCALE; //rr
+  d[1] = SERVO_MID + (PITCH+ROLL)*SCALE;  //fr
+  d[2] = SERVO_MID + (-PITCH-ROLL)*SCALE; //rl
   d[3] = SERVO_MID + (PITCH-ROLL)*SCALE;  //fl
   wa(d);
   delay(10);
@@ -63,7 +70,7 @@ void loop() {
 }
 
 
-////////////////////////////////functions area//////////////////////////////
+////////////////////////////////functions area////////////////////////////////////
 
 void w(uint8_t address, uint8_t value){ //write byte to address
   Wire.beginTransmission(0x68);
@@ -92,7 +99,13 @@ double gc(uint8_t address) { //read and convert to newtons
   return r2(address)/819.2; 
   }
 
-void wa(int d[]){ // write angles to servos
+void wa(int d[]){ // writes angles to servos, applies calibration and limits max points
+  //FIRST - apply diagonal calibration
+  d[0] = d[0] - SERVO_DIFF;
+  d[1] = d[1] + SERVO_DIFF;
+  d[2] = d[2] + SERVO_DIFF;
+  d[3] = d[3] - SERVO_DIFF;
+  //SECOND - remove overshoots
   for (int i = 0; i<4; i++){
     if (d[i] < SERVO_MIN){
       d[i]=SERVO_MIN;
@@ -101,10 +114,24 @@ void wa(int d[]){ // write angles to servos
       d[i]=SERVO_MAX;
       }
     }
+  /*for (int i = 0; i<4; i++){
+    Serial.print(" ");
+    Serial.print(i);
+    Serial.print(":  ");
+    Serial.print(d[i]);
+    }
+  Serial.println();/**/
+  //THIRD - invert two of four servos
+  d[0] = 180 - d[0];
+  d[1] = d[1];
+  d[2] = d[2];
+  d[3] = 180 - d[3];
+  //AND ONLY THEN write to servos
   rr.write(d[0]);
   fr.write(d[1]);
   rl.write(d[2]);
-  fl.write(d[3]);  
+  fl.write(d[3]);
+  
   }
 
 
