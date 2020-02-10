@@ -5,10 +5,10 @@
 #define SERVO_MIN 70
 #define SERVO_MAX 110
 #define SERVO_MID 90
-#define SERVO_DIFF 12
+#define SERVO_DIFF 0
 #define X_CAL 0.0
-#define Y_CAL -0.4
-#define Z_CAL 1.2
+#define Y_CAL 0.0
+#define Z_CAL 0.0
 #define PITCH -acz
 #define ROLL acy
 
